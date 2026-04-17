@@ -1,29 +1,37 @@
 using UnityEngine;
-using System.IO;
 using UnityEngine.UI;
 using System;
+using System.IO;
 
+
+
+/// <summary>
+/// Handles music beat synchronization, background pulsing, and bot spawning.
+/// </summary>
 public class BeatConductor : MonoBehaviour
 {
-    public AudioSource musicSource;
-    public string beatMapFile = "song_beats.json";
-    public BotSpawner botSpawner;
+    [Header("Audio & Beat Map")]
+    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private string beatMapFile = "song_beats.json";
+    [SerializeField] private BotSpawner botSpawner;
 
-    public Image backgroundPanel;  // assign your UI Panel
-    public float pulseStrength = 0.6f;
-    public float decaySpeed = 6f;
+    [Header("UI & Visuals")]
+    [SerializeField] private Image backgroundPanel;  // assign your UI Panel
+    [SerializeField] private float pulseStrength = 0.6f;
+    [SerializeField] private float decaySpeed = 6f;
+    [SerializeField] private bool enableBackgroundFlash = false;
 
-    BeatMap beatMap;
-    int nextBeatIndex = 0;
+    private BeatMap beatMap;
+    private int nextBeatIndex = 0;
 
-    double dspStartTime;
+    private double dspStartTime;
 
-    float baseAlpha;
-    float targetAlpha;
+    private float baseAlpha;
+    private float targetAlpha;
 
     public static event Action<int, float> OnBeatGlobal;
 
-    void Start()
+    private void Start()
     {
         LoadBeatMap();
 
@@ -35,71 +43,79 @@ public class BeatConductor : MonoBehaviour
         targetAlpha = baseAlpha;
     }
 
-    void Update()
+    private void Update()
     {
-        if (beatMap == null || nextBeatIndex >= beatMap.beats.Length)
+        if (beatMap == null || nextBeatIndex >= beatMap.Beats.Length)
             return;
 
         // DSP-accurate song time
-        double songTime =
-            AudioSettings.dspTime - dspStartTime;
+        double songTime = AudioSettings.dspTime - dspStartTime;
 
-        if (songTime >= beatMap.beats[nextBeatIndex])
+        if (songTime >= beatMap.Beats[nextBeatIndex])
         {
             OnBeat(nextBeatIndex, (float)songTime);
             nextBeatIndex++;
         }
 
         Color c = backgroundPanel.color;
-        c.a = Mathf.Lerp(c.a, baseAlpha, Time.deltaTime * decaySpeed);
+        if (enableBackgroundFlash)
+        {
+            c.a = Mathf.Lerp(c.a, baseAlpha, Time.deltaTime * decaySpeed);
+        }
+        else
+        {
+            c.a = baseAlpha;
+        }
         backgroundPanel.color = c;
     }
 
-    void LoadBeatMap()
+    /// <summary>
+    /// Loads the beat map from a JSON file.
+    /// </summary>
+    private void LoadBeatMap()
     {
-        Debug.Log(Path.Combine(
-            Application.streamingAssetsPath,
-            beatMapFile
-        ));
-        string path = Path.Combine(
-            Application.streamingAssetsPath,
-            beatMapFile
-        );
+        string path = Path.Combine(Application.streamingAssetsPath, beatMapFile);
+        if (!File.Exists(path))
+        {
+            Debug.LogError($"Beat map file not found: {path}");
+            return;
+        }
 
         string json = File.ReadAllText(path);
-        Debug.Log(json);
         beatMap = JsonUtility.FromJson<BeatMap>(json);
     }
-    // 9 is first spawn
-    // spawn on every 8 until 
-    Boolean shouldSpawn(int index)
+
+    /// <summary>
+    /// Determines if a bot should spawn on this beat index.
+    /// </summary>
+    private bool ShouldSpawn(int index)
     {
         int beat = index % 4;
         int bar = index / 4;
-        if (bar < 2)
-        {
-            return false;
-        }
-        if ( bar < 8)
-        {
-            return bar % 2 == 0 && beat == 1;
-        }
-        return bar < 33 && beat < 1 ? beat == 3 : true;
+        // Spawn every 4 bars, on the first beat of each bar (beat 0)
+        return bar % 4 == 0 && beat == 0;
     }
 
-    void OnBeat(int index, float time)
+    /// <summary>
+    /// Called on each beat. Triggers global event and visual pulse.
+    /// </summary>
+    private void OnBeat(int index, float time)
     {
-        // Spawn on beat
-        if (shouldSpawn(index))
-        {
-            botSpawner.spawnBot();
-        }
+        // TEMP: Disable bot spawning on beat for single-bot test
+        // if (ShouldSpawn(index))
+        // {
+        //     botSpawner.SpawnBot();
+        // }
 
         OnBeatGlobal?.Invoke(index, time);
 
         // Instant flash on beat
-        Color c = backgroundPanel.color;
-        c.a = baseAlpha + pulseStrength;
-        backgroundPanel.color = c;
+        if (enableBackgroundFlash)
+        {
+            targetAlpha = baseAlpha + pulseStrength;
+            Color c = backgroundPanel.color;
+            c.a = targetAlpha;
+            backgroundPanel.color = c;
+        }
     }
 }

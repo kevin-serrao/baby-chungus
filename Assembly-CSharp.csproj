@@ -65,6 +65,7 @@
     <Compile Include="Assets\BotSpawner.cs" />
     <Compile Include="Assets\LogicManager.cs" />
     <Compile Include="Assets\BotScript.cs" />
+    <Compile Include="Assets\SpriteScaler.cs" />
     <Compile Include="Assets\BeatMap.cs" />
     <Compile Include="Assets\PlayerControls.cs" />
     <Compile Include="Assets\BeatConductor.cs" />

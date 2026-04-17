@@ -13,9 +13,9 @@ GameObject:
   - component: {fileID: 1293037510362170288}
   - component: {fileID: 5174311853112404101}
   - component: {fileID: 2766295044728071376}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Bot
-  m_TagString: Untagged
+  m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -180,3 +180,4 @@ MonoBehaviour:
   moveFrequency: 0.4
   secondsSinceLastMove: 0
   logic: {fileID: 0}
+  health: 2

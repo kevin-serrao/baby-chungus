@@ -1,7 +1,10 @@
 [System.Serializable]
+/// <summary>
+/// Represents a beat map for music synchronization.
+/// </summary>
 public class BeatMap
 {
-    public float tempo;
-    public float[] beats;
-    public float offset;
+    public float Tempo;
+    public float[] Beats;
+    public float Offset;
 }
